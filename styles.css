@@ -1,0 +1,15 @@
+.inputform>div {
+    border: 20px solid black;
+    background-color: 'gray'
+  }
+
+  
+  #slidercontainer {
+    margin-left: 25vh !important;
+    margin-right: 25vh !important;
+    }
+
+    .slider
+{
+    width: 100%;
+}
