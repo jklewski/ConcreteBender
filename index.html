@@ -171,7 +171,7 @@
 </head>
 
 <body>
-  <div class="row" style="border-style:solid">
+  <div class="row">
     <div class="col p-5">
       <input id="h" data-prefix="h&nbsp" data-suffix="mm" class="geom" type="number" value="300" min="0" max="1000"
         step="10" />
@@ -192,7 +192,7 @@
     </div>
     <div class="col p-5">
 
-        <div id="myDiv2" class="container-fluid" style="height:100%; width:100%; border-style:solid"></div> 
+        <div id="myDiv2" class="container-fluid" style="height:100%; width:100%;"></div> 
       </div>
   </div>
   <br>
@@ -201,7 +201,7 @@
   </div>
   
   <div id="myDiv" class="container-fluid" style="width:90%;height:300px;"></div>
-  <div id="myDiv3" class="container-fluid" style="width:90%;height:300px;"></div>
+  <div id="myDiv3" class="container-fluid" style="width:50%;height:300px;"></div>
 
 
   <script>
@@ -357,12 +357,12 @@
       var trace21 = {
         x: curvature,
         y: Mc,
-        xaxis: 'x4', yaxis: 'y4', mode: 'line'
+        mode: 'line'
       }
       var trace22 = {
         x: [curvature[k], curvature[k]],
         y: [Mc[k], Mc[k]],
-        xaxis: 'x4', yaxis: 'y4', mode: 'scatter'
+        mode: 'scatter'
       }
 
       var trace23 = {
@@ -403,6 +403,15 @@
 
       };
 
+const ymax = Math.ceil(Math.max(...Mc.slice(2,Mc.length)))*1.1;
+const xmax = Math.max(...curvature.slice(2,curvature.length))*1.1;
+
+var layout3 = {
+    yaxis: {range:[0,ymax]},
+    xaxis: {range:[0,xmax]},
+    showlegend: false,
+}
+
       var layout2 = {
         autosize: false,
         height:300,
@@ -442,10 +451,7 @@
   ] 
       };
 
-var layout3 = {
-    showlegend: false,
-     
-}
+
       var data = [trace11, trace12, trace13, trace14]
       var data2 = [trace23,trace24,trace25,trace26]
       var data3 = [trace21,trace22]
