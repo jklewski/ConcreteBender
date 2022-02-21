@@ -59,6 +59,7 @@
 
       });
       $(".geom").on('input', function () {
+        calcMtrl();
         calcGeometry();
         calc();
         plotFunc();
@@ -173,7 +174,7 @@
 
 <body>
   <div class="row">
-    <div class="col p-5">
+    <div class="col-4 p-5">
       <input id="h" data-prefix="h&nbsp" data-suffix="mm" class="geom" type="number" value="300" min="0" max="1000"
         step="10" />
       <input id="b" data-prefix="b&nbsp" data-suffix="mm" class="geom" type="number" value="200" min="100" max="1000"
@@ -186,23 +187,23 @@
       <input id="dbar_p" data-prefix="ɸₜ" data-suffix="mm" class="geom" type="number" value="12" min="6" max="24"
         step="2" />
       <input id="nbars_p" data-prefix="n" class="geom" type="number" value="4" min="1" max="10" step="1" />
-      <input id="fc" data-prefix="fc" data-suffix="MPa" class="mtrl" type="number" value="20" min="20" max="50"
+      <input id="fc" data-prefix="fc" data-suffix="MPa" class="geom" type="number" value="20" min="20" max="50"
         step="5" />
-      <input id="fy" data-prefix="fy" data-suffix="MPa" class="mtrl" type="number" value="500" min="150" max="500"
+      <input id="fy" data-prefix="fy" data-suffix="MPa" class="geom" type="number" value="500" min="150" max="500"
         step="5" />
     </div>
-    <div class="col p-5">
+    <div class="col-8 p-5">
 
         <div id="myDiv2" class="container-fluid" style="height:100%; width:100%;"></div> 
       </div>
   </div>
   <br>
-  <div id="slidercontainer">
+  <div id="slidercontainerr" class="container-sm" style="width:90%;">
     <input type="range" min="1" max="100" value="100" class="slider" id="myRange" oninput="plotFunc()">
   </div>
   
-  <div id="myDiv" class="container-fluid" style="width:90%;height:300px;"></div>
-  <div id="myDiv3" class="container-fluid" style="width:50%;height:300px;"></div>
+  <div id="myDiv" class="container-lg" style="width:90%;height:300px;"></div>
+  <div id="myDiv3" class="container-lg" style="width:50%;height:300px;"></div>
 
 
   <script>
@@ -393,15 +394,23 @@
         yaxis: { range: [0, h], scaleanchor: "x" },
         xaxis2: { range: [-50, 50], title: "stress (scaled)" },
         yaxis2: { range: [0, h]},
-        xaxis3: { range: [-0.01, 0.004], title: "strain" },
+        xaxis3: { range: [-0.03, 0.0035], title: "strain" },
         yaxis3: { range: [0, h]},
-        //yaxis4: { range: [0, math.max(Mc)], title: "moment" },
-        //xaxis4: { range: [0, math.max(curvature)], title: curvature },
-        //xaxis5: { range: [0, 2e-2], title: "steel stress" },
-        //yaxis5: { title: "steel strain" },
         shapes: section_geom.concat(stress_dist_shape),
         showlegend: false,
-
+        annotations: [{
+         text: (Math.round(eps_c_out[k]*10000)/10) +"‰",
+         font: {
+         size: 12,
+	       color: 'black',
+      },
+      showarrow: true,
+    align: 'center',
+    x: eps_c_out[k],
+    y: h,
+    xref: 'x3',
+    yref: 'y3',
+  }],
       };
 
 const ymax = Math.ceil(Math.max(...Mc.slice(2,Mc.length)))*1.1;
@@ -416,7 +425,6 @@ var layout3 = {
       var layout2 = {
         autosize: false,
         height:300,
-        width:400,
         grid: { rows: 1, columns: 2, pattern: 'independent'},
         xaxis: {domain:[0,0.45], range: [0, 0.004], title: "strain" },
         xaxis2: {domain:[0.55,1], range: [0, 4e-3], title: "strain" },
