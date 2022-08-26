@@ -15,28 +15,29 @@
 
 .inputs { 
   border-radius: 15px;
-  width:500px;
+  max-width:550px;
   display:block;
   margin: auto;
 }
 
 .inputContent {
   padding:5px;
+
 }
 
 .Graphgroup1 {
-  width: 900px;
+  max-width: 40vw;
   margin:auto;
   border-radius: 15px;
 }
 
 .Graphgroup2 {
-  width: 900px;
+  max-width: 80vw;
   margin:auto;
   border-radius: 30px;
 }
 .Graphgroup3 {
-  width: 900px;
+  max-width: 40vw;
   margin:auto;
   border-radius: 15px;
 }

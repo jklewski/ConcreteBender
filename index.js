@@ -147,6 +147,7 @@ function calc() {
     sigma_sp_out = [];
     eps_c_out = [];
     eps_s1_out = [];
+    eps_sp_out = [];
     A_s = geo.A_s;
     A_sp = geo.A_sp;
     b = geo.b;
@@ -182,6 +183,8 @@ function calc() {
         sigma_s_out[i] = sigma_s[id_zero[i]] / 1000000;
         sigma_sp_out[i] = sigma_sp[id_zero[i]] / 1000000;
         eps_s1_out[i] = math.max(eps_c_sub) * (d - xn[id_zero[i]]) / (xn[id_zero[i]])
+        eps_sp_out[i] = math.max(eps_c_sub) * (xn[id_zero[i]] - d_p) / (xn[id_zero[i]])
+        
         cncrt_tp[i] = math.divide(math.sum(math.dotMultiply(sigma_sub, yc_out[i])), math.sum(sigma_sub))
         Mc[i] = sigma_s_out[i] * A_s * (cncrt_tp[i]) * 1000;
         curvature[i] = 1 / ((d - xn[id_zero[i]]) / eps_s1_out[i])
@@ -236,42 +239,58 @@ function plotFunc() {
         mode: 'line'
     }
     var trace21 = {
-        x: curvature,
-        y: Mc,
+        x: curvature.slice(0,k),
+        y: Mc.slice(0,k),
         mode: 'line'
-    }
-    var trace22 = {
-        x: [curvature[k], curvature[k]],
-        y: [Mc[k], Mc[k]],
-        mode: 'scatter'
     }
 
     var trace23 = {
-        x: eps_s,
-        y: math.divide(mtrl_sigma_s, 1000000),
-        mode: "line"
+        x: eps_s1_out.slice(1,k),
+        y: math.divide(sigma_s_out.slice(1,k), 1),
+        mode: "line",
+        yaxis: "y",
+        name: "Steel (bottom)"
     }
+
     var trace24 = {
-        x: [eps_s1_out[k], eps_s1_out[k]],
-        y: [sigma_s_out[k], sigma_s_out[k]],
-        mode: "scatter"
+        x: eps_sp_out.slice(1,k),
+        y: math.divide(sigma_sp_out.slice(1,k), 1),
+        mode: "line",
+        yaxis: "y",
+        name: "Steel (top)",
+        line: {
+            dash: 'dot',
+            width: 4
+          }
     }
+
+//    var trace24 = {
+//        x: [eps_s1_out[k], eps_s1_out[k]],
+//        y: [sigma_s_out[k], sigma_s_out[k]],
+//        mode: "scatter",
+//        yaxis: "y"
+//    }
     var trace25 = {
-        x: eps_c,
-        y: math.divide(sigma_c, 1000000),
-        mode: "line", xaxis: 'x2', yaxis: 'y2'
+        x: eps_c.slice(0,k),
+        y: math.divide(sigma_c.slice(0,k), 1000000),
+        mode: "line",
+        yaxis: "y2",
+        name: "Concrete"
     }
-    var trace26 = {
-        x: [eps_c_out[k], eps_c_out[k]],
-        y: [xc_out[k][xc_out[k].length - 1], xc_out[k][xc_out[k].length - 1]],
-        mode: "scatter", xaxis: 'x2', yaxis: 'y2'
-    }
+ //   var trace26 = {
+ //       x: [eps_c_out[k], eps_c_out[k]],
+ //       y: [xc_out[k][xc_out[k].length - 1], xc_out[k][xc_out[k].length - 1]],
+ //       mode: "scatter",
+ //       yaxis: "y2"
+ //   }
     var layout = {
         paper_bgcolor:'rgba(0,0,0,0)', 
         grid: {
-            rows: 1, columns: 3, pattern: 'independent', yaxes: ['', 'y', 'y'],
-            xgap: 0.2, ygap: 0
+            rows: 1, columns: 3, pattern: 'independent',
+            xgap: 0.2, ygap: 0,
+            subplots:['xy2','x2y2','x3y2'],
         },
+        
         xaxis: { range: [0, w] },
         yaxis: { range: [0, h], scaleanchor: "x" },
         xaxis2: { range: [-50, 50], title: "stress (scaled)" },
@@ -299,54 +318,54 @@ function plotFunc() {
     const xmax = Math.max(...curvature.slice(2, curvature.length)) * 1.1;
 
     var layout3 = {
-        yaxis: { range: [0, ymax] },
-        xaxis: { range: [0, xmax] },
+        yaxis: {
+            title:"Moment / kNm",
+            range: [0, ymax] },
+        xaxis: {
+            title:"curvature / r<sup> -1</sup>",
+            range: [0, xmax] },
         showlegend: false,
         paper_bgcolor:'rgba(0,0,0,0)',        
     }
 
     var layout2 = {
         paper_bgcolor:'rgba(0,0,0,0)', 
-        grid: { rows: 1, columns: 2, pattern: 'independent' },
-        xaxis: { domain: [0, 0.45], range: [0, 0.004], title: "strain" },
-        xaxis2: { domain: [0.55, 1], range: [0, 4e-3], title: "strain" },
-        yaxis: { title: "stress / MPa" },
-        showlegend: false,
-        annotations: [{
-            text: "Steel",
-            font: {
-                size: 12,
-                color: 'black',
-            },
-            showarrow: true,
-            align: 'center',
-            x: 0.13,
-            y: 0.9,
-            xref: 'paper',
-            yref: 'paper',
+        xaxis: {domain: [0.15, 0.85],
+            range:[0,0.006],
+            title:"strain / -"
         },
-        {
-            text: "Concrete",
-            font: {
-                size: 12,
-                color: 'black',
-            },
-            showarrow: true,
-            align: 'center',
-            x: 0.65,
-            y: 0.9,
-            xref: 'paper',
-            yref: 'paper',
+        yaxis: {
+          title: 'Steel stress / MPa',
+          showgrid: false,
+          rangemode: 'tozero',
+        },
+        yaxis2: {
+          title: 'Concrete stress / MPa',
+          anchor: 'free',
+          overlaying: 'y',
+          side: 'right',
+          position: 0.85,
+          showgrid: false,
+          showline: true,
+          rangemode: 'tozero',
+        },
+        legend: {
+            x: 0.8,
+            xanchor: 'right',
+            y: 0.05
         }
-        ]
-    };
+      };
+
+
+
 
 
     var data = [trace11, trace12, trace13, trace14]
-    var data2 = [trace23, trace24, trace25, trace26]
-    var data3 = [trace21, trace22]
+    var data2 = [trace23, trace24,trace25]
+    var data3 = [trace21]
 
-    Plotly.newPlot(ax, data, layout);
-    Plotly.newPlot(ax2, data2, layout2);
-    Plotly.newPlot(ax3, data3, layout3);
+    var config = {responsive: true}    
+    Plotly.newPlot(ax, data, layout,config);
+    Plotly.newPlot(ax2, data2, layout2,config);
+    Plotly.newPlot(ax3, data3, layout3,config);
 }
