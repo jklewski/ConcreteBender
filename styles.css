@@ -26,18 +26,21 @@
 }
 
 .Graphgroup1 {
-  max-width: 40vw;
+  width: 40vw;
+  height: 30vw;
   margin:auto;
   border-radius: 15px;
 }
 
 .Graphgroup2 {
-  max-width: 80vw;
+  width:60vw;
+  height:30vw;
   margin:auto;
   border-radius: 30px;
 }
 .Graphgroup3 {
-  max-width: 40vw;
+  width: 40vw;
+  height: 30vw;
   margin:auto;
   border-radius: 15px;
 }

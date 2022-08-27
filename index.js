@@ -283,6 +283,9 @@ function plotFunc() {
  //       mode: "scatter",
  //       yaxis: "y2"
  //   }
+
+ var config = {responsive: true}  
+
     var layout = {
         paper_bgcolor:'rgba(0,0,0,0)', 
         grid: {
@@ -312,12 +315,26 @@ function plotFunc() {
             xref: 'x3',
             yref: 'y3',
         }],
+        margin: {
+            l: 50,
+            r: 10,
+            b: 50,
+            t: 50,
+            pad: 4
+          },
     };
 
     const ymax = Math.ceil(Math.max(...Mc.slice(2, Mc.length))) * 1.1;
     const xmax = Math.max(...curvature.slice(2, curvature.length)) * 1.1;
 
     var layout3 = {
+        margin: {
+            l: 50,
+            r: 10,
+            b: 50,
+            t: 10,
+            pad: 4
+          },
         yaxis: {
             title:"Moment / kNm",
             range: [0, ymax] },
@@ -353,7 +370,14 @@ function plotFunc() {
             x: 0.8,
             xanchor: 'right',
             y: 0.05
-        }
+        },
+        margin: {
+            l: 10,
+            r: 10,
+            b: 50,
+            t: 10,
+            pad: 4
+          },
       };
 
 
@@ -364,8 +388,20 @@ function plotFunc() {
     var data2 = [trace23, trace24,trace25]
     var data3 = [trace21]
 
-    var config = {responsive: true}    
+      
     Plotly.newPlot(ax, data, layout,config);
+        ax.layout.yaxis2.range[1] = ax.layout.yaxis.range[1]
+        ax.layout.yaxis3.range[1] = ax.layout.yaxis.range[1]
+        ax.layout.yaxis2.range[0] = ax.layout.yaxis.range[0]
+        ax.layout.yaxis3.range[0] = ax.layout.yaxis.range[0]
+        Plotly.redraw(ax)
+
     Plotly.newPlot(ax2, data2, layout2,config);
     Plotly.newPlot(ax3, data3, layout3,config);
+}
+
+window.onresize = () => {
+
+      plotFunc()
+      
 }
