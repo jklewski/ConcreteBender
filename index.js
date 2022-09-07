@@ -152,6 +152,7 @@ function calc() {
     A_sp = geo.A_sp;
     b = geo.b;
     h = geo.h;
+    NA = [];
     var xn = math.range(d_p, d - d_p, d / 500, true);
     var id_zero = [0];
     xn = xn._data;
@@ -188,6 +189,7 @@ function calc() {
         cncrt_tp[i] = math.divide(math.sum(math.dotMultiply(sigma_sub, yc_out[i])), math.sum(sigma_sub))
         Mc[i] = sigma_s_out[i] * A_s * (cncrt_tp[i]) * 1000;
         curvature[i] = 1 / ((d - xn[id_zero[i]]) / eps_s1_out[i])
+        NA[i] = xn[id_zero[i]]
     }
 
     //Draw polygons from strss and strain distributions
@@ -201,7 +203,6 @@ function calc() {
         }
         pathdefs[i] = pathdef + 'L0,' + h + 'Z';
     }
-
     return
 }
 
@@ -283,6 +284,16 @@ function plotFunc() {
  //       mode: "scatter",
  //       yaxis: "y2"
  //   }
+
+ var traces = [
+	{x: [0,0,w,w], y: [h-NA[k],h,h,h-NA[k]], fill: 'toself',
+    fillcolor: 'rgba(0,0,255,0)',
+line: {color:'red'}},
+    {x: [0,0,w,w], y: [0,h-NA[k],h-NA[k],0], fill: 'toself',
+    fillcolor: 'rgba(255,0,0,0)',
+line: {color:'red'}}]
+    
+ 
 
  var config = {responsive: true}  
 
@@ -384,7 +395,7 @@ function plotFunc() {
 
 
 
-    var data = [trace11, trace12, trace13, trace14]
+    var data = [trace11, trace12, trace13, trace14,traces[0],traces[1]]
     var data2 = [trace23, trace24,trace25]
     var data3 = [trace21]
 

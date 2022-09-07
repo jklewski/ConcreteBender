@@ -30,7 +30,7 @@
         decrementButton: "<strong>-</strong>",
         incrementButton: "<strong>+</strong>",
         // class of input group
-        groupClass: "input-group-spinner",
+        groupClass: "input-group-spinner ",
         // button class
         buttonsClass: "btn-outline-secondary",
         // button width
@@ -47,17 +47,8 @@
         keyboardStepping: true,
         // the locale, per default detected automatically from the browser
         locale: navigator.language,
-        // the template of the input
-        template: // the template of the input
-          '<div class="input-group ${groupClass}">' +
-          '<input type="text" inputmode="decimal" style="text-align: ${textAlign}" class="form-control form-control-text-input"/>' +
-          '<div class="input-group-prepend"><button style="min-width: ${buttonsWidth}" class="btn btn-decrement ${buttonsClass} btn-minus" type="button">${decrementButton}</button></div>' +
-          '<div class="input-group-append"><button style="min-width: ${buttonsWidth}" class="btn btn-increment ${buttonsClass} btn-plus" type="button">${incrementButton}</button></div>' +
-          '</div>'
-
-
-
       });
+      
       $(".geom").on('input', function () {
         calcMtrl();
         calcGeometry();
@@ -79,43 +70,43 @@
 <body>
   <br>
   <br>
-  <div class="container-fluid inputs shadow p-2 mb-2 bg-white rounded">
-    <div class="inputContent">
+  <div class="inputs shadow p-2 mb-2 bg-white rounded">
+    <div class="inputContent ">
       <div class="row">
-        <div class="col-7">
+        <div class="col-6">
           Section Geometry
-          <input id="h" data-prefix="h&nbsp" data-suffix="mm" class="geom" type="number" value="300" min="0" max="1000"
+          <input id="h" data-prefix="h&nbsp" data-suffix="mm" class="geom form-control-sm" type="number" value="300" min="0" max="1000"
             step="10" />
-          <input id="b" data-prefix="b&nbsp" data-suffix="mm" class="geom" type="number" value="200" min="100"
+          <input id="b" data-prefix="b&nbsp" data-suffix="mm" class="geom form-control-sm" type="number" value="200" min="100"
             max="1000" step="10" />
         </div>
       </div>
       Reinforcement
       <div class="row">
-        <div class="col-7">
-          <input id="dbar" data-prefix="ɸᵤ" data-suffix="mm" class="geom" type="number" value="12" min="6" max="24"
+        <div class="col-6">
+          <input id="dbar" data-prefix="ɸᵤ" data-suffix="mm" class="geom form-control-sm" type="number" value="12" min="6" max="24"
             step="2" />
         </div>
-        <div class="col-5">
-          <input id="nbars" data-prefix="n" class="geom" type="number" value="4" min="1" max="10" step="1" />
+        <div class="col-4">
+          <input id="nbars" data-prefix="n" class="geom form-control-sm" type="number" value="4" min="1" max="10" step="1" />
         </div>
       </div>
 
       <div class="row">
-        <div class="col-7">
-          <input id="dbar_p" data-prefix="ɸₜ" data-suffix="mm" class="geom" type="number" value="12" min="6" max="24"
+        <div class="col-6">
+          <input id="dbar_p" data-prefix="ɸₜ" data-suffix="mm" class="geom form-control-sm" type="number" value="12" min="6" max="24"
             step="2" />
         </div>
-        <div class="col-5">
-          <input id="nbars_p" data-prefix="n" class="geom" type="number" value="4" min="1" max="10" step="1" />
+        <div class="col-4">
+          <input id="nbars_p" data-prefix="n" class="geom form-control-sm" type="number" value="4" min="1" max="10" step="1" />
         </div>
       </div>
       Materials
       <div class="row">
-        <div class="col-7">
-          <input id="fc" data-prefix="fc" data-suffix="MPa" class="geom" type="number" value="20" min="20" max="50"
+        <div class="col-6">
+          <input id="fc" data-prefix="fc" data-suffix="MPa" class="geom form-control-sm" type="number" value="20" min="20" max="50"
             step="5" />
-          <input id="fy" data-prefix="fy" data-suffix="MPa" class="geom" type="number" value="500" min="150" max="500"
+          <input id="fy" data-prefix="fy" data-suffix="MPa" class="geom form-control-sm" type="number" value="500" min="150" max="500"
             step="5" />
         </div>
       </div>
@@ -130,12 +121,12 @@
   </div>
 
   <br>
-  
-  
-    <div class="shadow bg-white Graphgroup2" id="myDiv"></div>  
-  <br>
-<div class="row">
 
+    <div class=" shadow bg-white Graphgroup2" id="myDiv"></div>  
+    
+    <br>
+
+<div class="row">
  <div class="col"> 
     <div class="shadow bg-white Graphgroup3" id="myDiv3"></div>
  </div>
