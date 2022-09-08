@@ -138,16 +138,20 @@ function calcGeometry() {
 }
 
 function calc() {
-    Mc = [];
-    curvature = [];
+    crackCheck = [];
+    id_zeroCracked = [];
+    id_zeroUncracked = [];
+    Mc = [0];
+    curvature = [0];
     yc_out = [];
     xc_out = [];
     cncrt_tp = [];
-    sigma_s_out = [];
-    sigma_sp_out = [];
-    eps_c_out = [];
-    eps_s1_out = [];
-    eps_sp_out = [];
+    sigma_s_out = [0];
+    sigma_sp_out = [0];
+    eps_c_out = [0];
+    sigma_cb_out = [0];
+    eps_s1_out = [0];
+    eps_sp_out = [0];
     A_s = geo.A_s;
     A_sp = geo.A_sp;
     b = geo.b;
@@ -169,15 +173,31 @@ function calc() {
         var sigma_sp = math.dotMultiply(math.dotMultiply(math.dotDivide(math.max(eps_c_sub), xn), math.subtract(xn, d_p)), E_s);
         sigma_sp = sigma_sp.map(a => a > f_yd ? f_yd : a); //cap at yield stress
         //force equilibrium Fcc - Fs - Fct = 0, iterate for different x
-        let forceT = math.dotMultiply(sigma_s, A_s); //force tensile reinforcement
+        let forceT2 = math.dotMultiply(sigma_s, A_s); //force tensile reinforcement
+        eps_cb = xn.map((a,j) => (eps_c[i]*(h-xn[j])/xn[j]))
+        let forceTensionBlock = xn.map((a,j) => E_cm*(h-xn[j])*b*0.5*eps_cb[j])
+        let forceT1 = math.add(math.dotMultiply(sigma_s, A_s),forceTensionBlock); //force tensile side
+        
         let forceC = math.add(math.dotMultiply(sigma_sub_mean * b, xn), math.dotMultiply(sigma_sp, A_sp)) //force compression
-        let forceEq = math.subtract(forceC, forceT); //force equilibrium
-        id_zero[i] = findzero(forceEq); //find zero crossing x
-
+        let forceEqCracked = math.subtract(forceC, forceT2); //force equilibrium cracked tensile side
+        let forceEqUncracked = math.subtract(forceC, forceT1); //force equilibrium uncracked tensile side
+        id_zeroCracked[i] = findzero(forceEqCracked); //find zero crossing x, cracked
+        id_zeroUncracked[i] = findzero(forceEqUncracked); //find zero crossing x, uncracked
+        
+        if (eps_cb[id_zeroUncracked[i]]*E_cm > f_ctm) {
+            id_zero[i] = id_zeroCracked[i]
+            crackCheck[i] = true
+        } else {
+            id_zero[i] = id_zeroUncracked[i]
+            crackCheck[i] = false
+        }
+        
         yc_out[i] = math.range(d - xn[id_zero[i]], d, (d - (d - xn[id_zero[i]])) / (eps_c_sub.length - 1), true);
         yc_out[i] = yc_out[i]._data;
         yc_out[i] = math.add(yc_out[i], h - d)
 
+        // eps_c/x = eps_cb/(h-x)
+        // => eps_cb = eps_c*(h-x)/x 
 
         xc_out[i] = math.divide(sigma_sub, 1000000);
 
@@ -185,30 +205,53 @@ function calc() {
         sigma_sp_out[i] = sigma_sp[id_zero[i]] / 1000000;
         eps_s1_out[i] = math.max(eps_c_sub) * (d - xn[id_zero[i]]) / (xn[id_zero[i]])
         eps_sp_out[i] = math.max(eps_c_sub) * (xn[id_zero[i]] - d_p) / (xn[id_zero[i]])
-        
+        sigma_cb_out[i] = -E_cm*eps_cb[id_zero[i]]/10000000
+
         cncrt_tp[i] = math.divide(math.sum(math.dotMultiply(sigma_sub, yc_out[i])), math.sum(sigma_sub))
-        Mc[i] = sigma_s_out[i] * A_s * (cncrt_tp[i]) * 1000;
         curvature[i] = 1 / ((d - xn[id_zero[i]]) / eps_s1_out[i])
         NA[i] = xn[id_zero[i]]
+        Fs = sigma_s_out[i] * A_s * 1e3
+        Fsp = sigma_sp_out[i] * A_sp * 1e3
+        Fc = sigma_sub_mean * b * xn[id_zero[i]] / 1e3
+        Fct = 0.5 * eps_cb[id_zero[i]] * E_cm * b / 1e3 
+        if (crackCheck) {
+            Mc[i] = Fc * (cncrt_tp[i]-(h-xn[id_zero[i]])) +
+                    Fsp * (xn[id_zero[i]]-d_p) + 
+                    Fs * [d-xn[id_zero[i]]] 
+        } else {
+            Mc[i] = Fc * (cncrt_tp[i]-(h-xn[id_zero[i]])) +
+                    Fsp * (xn[id_zero[i]]-d_p) + 
+                    Fs * (d-xn[id_zero[i]]) + 
+                    Fct * ((h-xn[id_zero[i]])*2/3)
+        }
+        
     }
 
+    sigma_cb_out = sigma_cb_out.map((x,i) => crackCheck[i] ? 0:x)
     //Draw polygons from strss and strain distributions
     pathdefs = []
     for (let i = 1; i < xc_out.length; i++) {
         pathdef = 'M0,' + h
-
+        
         for (let j = 0; j < xc_out[i].length; j++) {
-            substr = 'L' + Math.round(xc_out[i][j] * 10) / 10 + ',' + (yc_out[i][j]);
+            substr = 'L' + Math.round(xc_out[i][j] * 10) / 10 + ',' + Math.round(yc_out[i][j]*1000)/1000;
             pathdef = pathdef.concat(substr)
         }
         pathdefs[i] = pathdef + 'L0,' + h + 'Z';
     }
+    pathdefsT = [];
+    for (let i = 1; i < xc_out.length; i++) {
+        pathdefT = 'M0,0'
+        substr = 'L' + Math.round(sigma_cb_out[i]*10) + ',0L0,' + Math.round(xn[id_zero[i]]*100)/100 + ',0Z'
+        pathdefsT[i] = pathdefT.concat(substr)
+        }
+
     return
 }
 
 function plotFunc() {
     var slider = document.getElementById("myRange")
-    k = slider.value;
+    k = parseInt(slider.value);
     ax = document.getElementById('myDiv');
     ax2 = document.getElementById('myDiv2');
     ax3 = document.getElementById('myDiv3');
@@ -219,71 +262,102 @@ function plotFunc() {
         type: 'path', path: pathdefs[k], line: { width: 1, color: 'rgb(0,0,0)' }, fillcolor: 'rgba(0,0,255,0.5)',
         xref: 'x2', yref: 'y2'
     }
+    
+    stress_dist_shapeT = {
+        type: 'path', path: pathdefsT[k], line: { width: 1, color: 'rgb(0,0,0)' }, fillcolor: 'rgba(255,0,0,0.5)',
+        xref: 'x2', yref: 'y2'
+    }
+    
     var trace11 = {
         x: [0, -sigma_s_out[k] / (10)],
         y: [h - d, h - d],
-        xaxis: 'x2', yaxis: 'y2', mode: 'line'
+        xaxis: 'x2', yaxis: 'y2', mode: 'lines+markers',
+        line: {color:'rgb(255,0,0)'}
     }
     var trace12 = {
         x: [0, sigma_sp_out[k] / (10)],
         y: [h - d_p, h - d_p],
-        xaxis: 'x2', yaxis: 'y2', mode: 'line'
+        xaxis: 'x2', yaxis: 'y2', mode: 'lines+markers',
+        line: {color:'rgb(0,155,0)'}
     }
     var trace13 = {
         x: [eps_c[k], -eps_s1_out[k]],
         y: [h, d_p],
-        xaxis: 'x3', yaxis: 'y3', mode: 'line'
+        xaxis: 'x3', yaxis: 'y3', mode: 'lines+markers'
     }
     var trace14 = {
         x: 0,
         y: 0,
-        mode: 'line'
+        mode: 'lines+markers',
     }
     var trace21 = {
-        x: curvature.slice(0,k),
-        y: Mc.slice(0,k),
-        mode: 'line'
+        x: curvature.slice(0,k+1),
+        y: Mc.slice(0,k+1),
+        mode: 'lines',
+        line: {width:4}
     }
 
     var trace23 = {
-        x: eps_s1_out.slice(1,k),
-        y: math.divide(sigma_s_out.slice(1,k), 1),
-        mode: "line",
+        x: eps_s1_out.slice(0,k+1).map((x) => -x),
+        y: sigma_s_out.slice(0,k+1).map((x) => -x),
+        mode: "lines",
         yaxis: "y",
-        name: "Steel (bottom)"
+        showlegend: false,
+        line: {color:'rgb(255,0,0)'}
     }
 
     var trace24 = {
-        x: eps_sp_out.slice(1,k),
-        y: math.divide(sigma_sp_out.slice(1,k), 1),
-        mode: "line",
+        x: eps_sp_out.slice(1,k+1),
+        y: math.divide(sigma_sp_out.slice(1,k+1), 1),
+        mode: "lines",
         yaxis: "y",
         name: "Steel (top)",
+        showlegend: false,
         line: {
-            dash: 'dot',
-            width: 4
+            color:'rgb(0,150,0)'
           }
     }
 
-//    var trace24 = {
-//        x: [eps_s1_out[k], eps_s1_out[k]],
-//        y: [sigma_s_out[k], sigma_s_out[k]],
-//        mode: "scatter",
-//        yaxis: "y"
-//    }
     var trace25 = {
-        x: eps_c.slice(0,k),
-        y: math.divide(sigma_c.slice(0,k), 1000000),
-        mode: "line",
-        yaxis: "y2",
-        name: "Concrete"
+        x: [-eps_s1_out[k], -eps_s1_out[k]],
+        y: [-sigma_s_out[k], -sigma_s_out[k]],
+        mode: "scatter",
+        yaxis: "y",
+        marker: {color:'rgb(255,0,0)'},
+        name: "Steel, (bottom)",
     }
- //   var trace26 = {
- //       x: [eps_c_out[k], eps_c_out[k]],
- //       y: [xc_out[k][xc_out[k].length - 1], xc_out[k][xc_out[k].length - 1]],
- //       mode: "scatter",
- //       yaxis: "y2"
- //   }
+    var trace26 = {
+        x: eps_c.slice(0,k+1),
+        y: math.divide(sigma_c.slice(0,k+1), 1000000),
+        mode: "lines",
+        yaxis: "y2",
+        line: {color:'rgb(0,0,255)'},
+        showlegend: false,
+    }
+    var trace27 = {
+        x: [0,-1*eps_cb[k]],
+        y: [0,-1*eps_cb*E_cm/1000000], 
+        mode: "lines",
+        yaxis: "y2",
+        showlegend: false,
+    }
+    var trace28 = {
+        x: [eps_c_out[k], eps_c_out[k]],
+        y: [xc_out[k][xc_out[k].length - 1], xc_out[k][xc_out[k].length - 1]],
+        mode: "scatter",
+        yaxis: "y2",
+        marker: {color:'rgb(0,0,255)'},
+        name: "Concrete, (top)",
+    }
+    var trace29 = {
+        x: [eps_sp_out[k], eps_sp_out[k]],
+        y: [sigma_sp_out[k], sigma_sp_out[k]],
+        mode: "scatter",
+        yaxis: "y",
+        marker: {color:'rgb(0,155,0)'},
+        name: "Steel (bottom)",
+    }
+
 
  var traces = [
 	{x: [0,0,w,w], y: [h-NA[k],h,h,h-NA[k]], fill: 'toself',
@@ -311,7 +385,7 @@ line: {color:'red'}}]
         yaxis2: { range: [0, h] },
         xaxis3: { range: [-0.03, 0.0035], title: "strain" },
         yaxis3: { range: [0, h] },
-        shapes: section_geom.concat(stress_dist_shape),
+        shapes: section_geom.concat(stress_dist_shape,stress_dist_shapeT),
         showlegend: false,
         annotations: [{
             text: (Math.round(eps_c_out[k] * 10000) / 10) + "‰",
@@ -359,28 +433,33 @@ line: {color:'red'}}]
     var layout2 = {
         paper_bgcolor:'rgba(0,0,0,0)', 
         xaxis: {domain: [0.15, 0.85],
-            range:[0,0.006],
-            title:"strain / -"
+            range:[-0.005,0.005],
+            title:"strain / -",
+            
         },
         yaxis: {
           title: 'Steel stress / MPa',
           showgrid: false,
           rangemode: 'tozero',
+          range: [-350,350]
         },
         yaxis2: {
           title: 'Concrete stress / MPa',
           anchor: 'free',
           overlaying: 'y',
           side: 'right',
-          position: 0.85,
           showgrid: false,
-          showline: true,
+          position: 0.85,
+          range:[-f_cm*2e-6,f_cm*2e-6],
+          showgrid: false,
+
           rangemode: 'tozero',
         },
         legend: {
-            x: 0.8,
-            xanchor: 'right',
-            y: 0.05
+            x: 0.15,
+            xanchor: 'left',
+            yanchor: 'top',
+            y: 1
         },
         margin: {
             l: 10,
@@ -396,7 +475,7 @@ line: {color:'red'}}]
 
 
     var data = [trace11, trace12, trace13, trace14,traces[0],traces[1]]
-    var data2 = [trace23, trace24,trace25]
+    var data2 = [trace23, trace24,trace25,trace26,trace27,trace28,trace29]
     var data3 = [trace21]
 
       
