@@ -66,7 +66,7 @@ function drawfunc(geo) {
     //draw cross section
     section_geom = [
         {
-            type: 'rect', x0: 0, y0: 0, x1: w, y1: h, line: { color: 'rgba(0, 0, 0, 1)', width: 2 }, fillcolor: 'rgba(150, 150, 150, 0.7)',
+            type: 'rect', x0: 0, y0: 0, x1: w, y1: h, line: { color: 'rgba(0, 0, 0, 1)', width: 2 }, fillcolor: 'rgba(150, 150, 150, 0.3)',
         },
     ]
 
@@ -85,12 +85,12 @@ function drawfunc(geo) {
         new_circle_p[i] = {
             type: 'circle', x_ref: 1, y_ref: 1, x0: x_bar_p[i] - dbar_p / 2, y0: y_bar_p - dbar_p / 2, x1: x_bar_p[i] + dbar_p / 2, y1: y_bar_p + dbar_p / 2, fillcolor: 'rgba(0, 0, 0, 1)',
         }
-
     }
     section_geom = section_geom.concat(new_circle_p)
 }
 
 function calcMtrl() {
+    num = 200;
     f_cm = document.getElementById("fc").value * 1e6 / 1.5
     eps_cu = 3.5e-3;
     eps_c1 = (0.7 * (f_cm * 10 ** -6) ** 0.31) * 10 ** -3;
@@ -98,7 +98,7 @@ function calcMtrl() {
     eps_c3 = 1.75e-3;
     E_cm = 30e9;
     f_ctm = 2.2e6;
-    eps_c = math.range(0, eps_cu, eps_cu / 100, true)._data;
+    eps_c = math.range(0, eps_cu, eps_cu / num, true)._data;
     var n = math.divide(eps_c, eps_c1);
     var k = 1.05 * E_cm * math.abs(eps_c1) / f_cm;
     var a = math.multiply(f_cm, math.subtract(math.multiply(k, n), math.square(n)));
@@ -107,7 +107,7 @@ function calcMtrl() {
     f_yd = document.getElementById("fy").value * 1e6 / 1.5;
     E_s = 200e9;
     eps_sy = f_yd / E_s;
-    eps_s = math.range(0, 2e-2, 2e-2 / 100)._data
+    eps_s = math.range(0, 2e-2, 2e-2 / num)._data
     mtrl_sigma_s = [];
     for (let i = 0; i < eps_s.length - 1; i++) {
         if (eps_s[i] <= eps_sy) {
@@ -251,7 +251,7 @@ function calc() {
 
 function plotFunc() {
     var slider = document.getElementById("myRange")
-    k = parseInt(slider.value);
+    k = parseInt(slider.value)*num/100;
     ax = document.getElementById('myDiv');
     ax2 = document.getElementById('myDiv2');
     ax3 = document.getElementById('myDiv3');
@@ -355,19 +355,58 @@ function plotFunc() {
         mode: "scatter",
         yaxis: "y",
         marker: {color:'rgb(0,155,0)'},
-        name: "Steel (bottom)",
+        name: "Steel (top)",
     }
 
 
- var traces = [
-	{x: [0,0,w,w], y: [h-NA[k],h,h,h-NA[k]], fill: 'toself',
-    fillcolor: 'rgba(0,0,255,0)',
-line: {color:'red'}},
-    {x: [0,0,w,w], y: [0,h-NA[k],h-NA[k],0], fill: 'toself',
-    fillcolor: 'rgba(255,0,0,0)',
-line: {color:'red'}}]
+    alpha =255;
+    if (crackCheck[k]) {
+        alpha = 0
+    }
+// var traces = [
+//	{x: [0,0,w,w], y: [h-NA[k],h,h,h-NA[k]], fill: 'toself',
+//    fillcolor: 'rgba(0,0,255,255)',
+//line: {color:'rgba(0,0,0,0)'}},
+//    {x: [0,0,w,w], y: [0,h-NA[k],h-NA[k],0], fill: 'toself',
+//    fillcolor: 'rgba(255,0,0,' + alpha + ')',
+//line: {color:'rgba(0,0,0,0)'}}]
     
- 
+if (!crackCheck[k]) {
+var cscale = [
+    [0, 'rgb(255,0,0)'],
+    [0.5, 'rgb(255,255,255)'],
+    [1, 'rgb(0,0,255)'],
+    ]
+}else{
+    var cscale = [
+        [0, 'rgb(255,255,255)'],
+        [0.5, 'rgb(255,255,255)'],
+        [1, 'rgb(0,0,255)'],
+        ]
+} 
+
+
+    let z = [];
+    for (let i = 0; i<xc_out[k].length;i++){
+        z[i] = [xc_out[k][i],xc_out[k][i]]
+    }
+    z = [[-xc_out[k][xc_out[k].length-1],-xc_out[k][xc_out[k].length-1]],...z]
+    
+ var surf = [
+    {//z:[[1,1],[0,0],[-1,-1]],
+    z:z,   
+    x:[0,0.2],
+    y:[0,...yc_out[k]],
+    type:'contour',
+    showscale:true,
+    contours: {
+        coloring: 'heatmap',    
+    },
+    colorscale:cscale,
+    coloraxis: 'coloraxis',
+    line: {width:0.}},
+    
+ ]
 
  var config = {responsive: true}  
 
@@ -378,13 +417,13 @@ line: {color:'red'}}]
             xgap: 0.2, ygap: 0,
             subplots:['xy2','x2y2','x3y2'],
         },
-        
+        coloraxis: {cmid:0,colorscale:cscale,colorbar: {x: -0.2,orientation:'h'}},
         xaxis: { range: [0, w] },
         yaxis: { range: [0, h], scaleanchor: "x" },
-        xaxis2: { range: [-50, 50], title: "stress (scaled)" },
-        yaxis2: { range: [0, h] },
+        xaxis2: { range: [-50, 50], title: "stress (scaled)"},
+        yaxis2: { range: [0, h], showticklabels:false},
         xaxis3: { range: [-0.03, 0.0035], title: "strain" },
-        yaxis3: { range: [0, h] },
+        yaxis3: { range: [0, h],showticklabels:false },
         shapes: section_geom.concat(stress_dist_shape,stress_dist_shapeT),
         showlegend: false,
         annotations: [{
@@ -474,7 +513,7 @@ line: {color:'red'}}]
 
 
 
-    var data = [trace11, trace12, trace13, trace14,traces[0],traces[1]]
+    var data = [trace11, trace12, trace13, trace14,surf[0]]
     var data2 = [trace23, trace24,trace25,trace26,trace27,trace28,trace29]
     var data3 = [trace21]
 
