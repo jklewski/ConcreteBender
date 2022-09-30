@@ -108,14 +108,7 @@ function calcMtrl() {
     E_s = 200e9;
     eps_sy = f_yd / E_s;
     eps_s = math.range(0, 2e-2, 2e-2 / num)._data
-    mtrl_sigma_s = [];
-    for (let i = 0; i < eps_s.length - 1; i++) {
-        if (eps_s[i] <= eps_sy) {
-            mtrl_sigma_s[i] = eps_s[i] * E_s;
-        } else {
-            mtrl_sigma_s[i] = f_yd;
-        }
-    }
+    mtrl_sigma_s = eps_s.map(x=>x<=eps_sy?x*E_s:f_yd);
 }
 
 function calcGeometry() {
@@ -298,63 +291,63 @@ function plotFunc() {
     }
 
     var trace23 = {
-        x: eps_s1_out.slice(0,k+1).map((x) => -x),
-        y: sigma_s_out.slice(0,k+1).map((x) => -x),
+        x: eps_s.map((x) => -x),
+        y: mtrl_sigma_s.map((x) => -x/1000000),
         mode: "lines",
         yaxis: "y",
         showlegend: false,
-        line: {color:'rgb(255,0,0)'}
+        line: {color:'rgb(155,155,155)'}
     }
 
     var trace24 = {
-        x: eps_sp_out.slice(1,k+1),
-        y: math.divide(sigma_sp_out.slice(1,k+1), 1),
+        x: eps_s,
+        y: mtrl_sigma_s.map((x) => x/1000000),
         mode: "lines",
         yaxis: "y",
-        name: "Steel (top)",
         showlegend: false,
-        line: {
-            color:'rgb(0,150,0)'
-          }
+        line: {color:'rgb(155,155,155)'}
     }
 
+    
+    let symb_s1 = eps_s1_out[k]>0.005?'arrow-left':'circle-x-open'
     var trace25 = {
-        x: [-eps_s1_out[k], -eps_s1_out[k]],
+        x: [eps_s1_out[k]>0.005?-0.005:-eps_s1_out[k], 
+        eps_s1_out[k]>0.005?-0.005:-eps_s1_out[k]],
         y: [-sigma_s_out[k], -sigma_s_out[k]],
         mode: "scatter",
         yaxis: "y",
-        marker: {color:'rgb(255,0,0)'},
+        marker: {color:'rgb(255,0,0)',size:10,symbol:symb_s1},
         name: "Steel, (bottom)",
     }
-    var trace26 = {
-        x: eps_c.slice(0,k+1),
-        y: math.divide(sigma_c.slice(0,k+1), 1000000),
-        mode: "lines",
-        yaxis: "y2",
-        line: {color:'rgb(0,0,255)'},
-        showlegend: false,
-    }
+
     var trace27 = {
-        x: [0,-1*eps_cb[k]],
-        y: [0,-1*eps_cb*E_cm/1000000], 
+        x: eps_c,
+        y: math.dotDivide(sigma_c,1000000), 
         mode: "lines",
         yaxis: "y2",
         showlegend: false,
+        line:{color:'rgb(155,155,155)'},
+        marker:{size:100}
     }
+
+    let symb_c1 = k==num?'x':'circle-x-open'
     var trace28 = {
         x: [eps_c_out[k], eps_c_out[k]],
         y: [xc_out[k][xc_out[k].length - 1], xc_out[k][xc_out[k].length - 1]],
         mode: "scatter",
         yaxis: "y2",
-        marker: {color:'rgb(0,0,255)'},
+        marker: {color:'rgb(0,0,255)',size:10,symbol:symb_c1},
         name: "Concrete, (top)",
     }
+
+    let symb_s2 = eps_sp_out[k]>0.005?'arrow-left':'circle-x-open'
     var trace29 = {
-        x: [eps_sp_out[k], eps_sp_out[k]],
+        x: [eps_sp_out[k]>0.005?0.005:eps_sp_out[k], 
+        eps_sp_out[k]>0.005?0.005:eps_sp_out[k]],
         y: [sigma_sp_out[k], sigma_sp_out[k]],
         mode: "scatter",
         yaxis: "y",
-        marker: {color:'rgb(0,155,0)'},
+        marker: {color:'rgb(0,155,0)',size:10,symbol:symb_s2},
         name: "Steel (top)",
     }
 
@@ -395,7 +388,7 @@ var cscale = [
  var surf = [
     {//z:[[1,1],[0,0],[-1,-1]],
     z:z,   
-    x:[0,0.2],
+    x:[0,b],
     y:[0,...yc_out[k]],
     type:'contour',
     showscale:true,
@@ -422,7 +415,7 @@ var cscale = [
         yaxis: { range: [0, h], scaleanchor: "x" },
         xaxis2: { range: [-50, 50], title: "stress (scaled)"},
         yaxis2: { range: [0, h], showticklabels:false},
-        xaxis3: { range: [-0.03, 0.0035], title: "strain" },
+        xaxis3: { range: [-0.03, 0.0036], title: "strain" },
         yaxis3: { range: [0, h],showticklabels:false },
         shapes: section_geom.concat(stress_dist_shape,stress_dist_shapeT),
         showlegend: false,
@@ -514,7 +507,7 @@ var cscale = [
 
 
     var data = [trace11, trace12, trace13, trace14,surf[0]]
-    var data2 = [trace23, trace24,trace25,trace26,trace27,trace28,trace29]
+    var data2 = [trace23, trace24,trace25,trace27,trace28,trace29]
     var data3 = [trace21]
 
       
