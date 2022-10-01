@@ -1,3 +1,6 @@
+var momentHistory = [];
+var curvatureHistory = [];
+
 function findzero(arr) {
     var id = [0] //becomes array, just number w/o []
     var k = 0
@@ -135,6 +138,7 @@ function calc() {
     id_zeroCracked = [];
     id_zeroUncracked = [];
     Mc = [0];
+
     curvature = [0];
     yc_out = [];
     xc_out = [];
@@ -217,9 +221,9 @@ function calc() {
                     Fs * (d-xn[id_zero[i]]) + 
                     Fct * ((h-xn[id_zero[i]])*2/3)
         }
-        
     }
-
+    momentHistory=momentHistory.concat(...[Mc,null])
+    curvatureHistory=curvatureHistory.concat(...[curvature,null])
     sigma_cb_out = sigma_cb_out.map((x,i) => crackCheck[i] ? 0:x)
     //Draw polygons from strss and strain distributions
     pathdefs = []
@@ -283,11 +287,18 @@ function plotFunc() {
         y: 0,
         mode: 'lines+markers',
     }
-    var trace21 = {
+    var trace31 = {
         x: curvature.slice(0,k+1),
         y: Mc.slice(0,k+1),
         mode: 'lines',
-        line: {width:4}
+        line:{width:4,color:'rgb(0,0,255)'}
+    }
+
+    var trace32 = {
+        x: curvatureHistory,
+        y: momentHistory,
+        mode: 'lines',
+        line: {width:2,color:'rgba(175,175,175,0.5)'}
     }
 
     var trace23 = {
@@ -508,7 +519,7 @@ var cscale = [
 
     var data = [trace11, trace12, trace13, trace14,surf[0]]
     var data2 = [trace23, trace24,trace25,trace27,trace28,trace29]
-    var data3 = [trace21]
+    var data3 = [trace32,trace31]
 
       
     Plotly.newPlot(ax, data, layout,config);
@@ -526,4 +537,10 @@ window.onresize = () => {
 
       plotFunc()
       
+}
+
+function funco() {
+    momentHistory = [];
+    curvatureHistory = [];
+    plotFunc()
 }
