@@ -77,7 +77,7 @@ function drawfunc(geo) {
     var new_circle = [];
     for (let i = 0; i < nbars; i++) {
         new_circle[i] = {
-            type: 'circle', x_ref: 1, y_ref: 1, x0: x_bar[i] - 0.5 * dbar, y0: y_bar[i] - 0.5 * dbar, x1: x_bar[i] + 0.5 * dbar, y1: y_bar[i] + 0.5 * dbar, fillcolor: 'rgba(0, 0, 0, 1)',
+            type: 'circle', x_ref: 1, y_ref: 1, x0: x_bar[i] - 0.5 * dbar, y0: y_bar[i] - 0.5 * dbar, x1: x_bar[i] + 0.5 * dbar, y1: y_bar[i] + 0.5 * dbar, fillcolor: 'rgba(0, 0, 0, 1)',line:{color:'rgba(0,0,0,0)'}
         }
     }
     section_geom = section_geom.concat(new_circle)
@@ -86,7 +86,7 @@ function drawfunc(geo) {
     var new_circle_p = []
     for (let i = 0; i < nbars_p; i++) {
         new_circle_p[i] = {
-            type: 'circle', x_ref: 1, y_ref: 1, x0: x_bar_p[i] - dbar_p / 2, y0: y_bar_p - dbar_p / 2, x1: x_bar_p[i] + dbar_p / 2, y1: y_bar_p + dbar_p / 2, fillcolor: 'rgba(0, 0, 0, 1)',
+            type: 'circle', x_ref: 1, y_ref: 1, x0: x_bar_p[i] - dbar_p / 2, y0: y_bar_p - dbar_p / 2, x1: x_bar_p[i] + dbar_p / 2, y1: y_bar_p + dbar_p / 2, fillcolor: 'rgba(0, 0, 0, 1)',line:{color:'rgba(0,0,0,0)'}
         }
     }
     section_geom = section_geom.concat(new_circle_p)
@@ -94,7 +94,7 @@ function drawfunc(geo) {
 
 function calcMtrl() {
     num = 200;
-    f_cm = document.getElementById("fc").value * 1e6 / 1.5
+    f_cm = document.getElementById("fc").value * 1e6
     eps_cu = 3.5e-3;
     eps_c1 = (0.7 * (f_cm * 10 ** -6) ** 0.31) * 10 ** -3;
     eps_c2 = 2e-3;
@@ -107,7 +107,7 @@ function calcMtrl() {
     var a = math.multiply(f_cm, math.subtract(math.multiply(k, n), math.square(n)));
     var b = math.add(math.multiply(k - 2, n), 1);
     sigma_c = math.dotDivide(a, b);
-    f_yd = document.getElementById("fy").value * 1e6 / 1.5;
+    f_yd = document.getElementById("fy").value * 1e6;
     E_s = 200e9;
     eps_sy = f_yd / E_s;
     eps_s = math.range(0, 2e-2, 2e-2 / num)._data
@@ -362,18 +362,40 @@ function plotFunc() {
         name: "Steel (top)",
     }
 
+    var stressBar = []
+    for (let i = 1; i<section_geom.length;i++) {
+        if (section_geom[i].y0 < h/2) {
+            stressBar[i-1] = structuredClone(section_geom[i])
+            let CoG_y = (stressBar[i-1].y0+stressBar[i-1].y1)/2
+            let CoG_x = (stressBar[i-1].x0+stressBar[i-1].x1)/2
+            let r = ((sigma_s_out[k]*1000000 / f_yd) * (geo.dbar/2)**2)**0.5
+            stressBar[i-1].y0 = CoG_y+r
+            stressBar[i-1].y1 = CoG_y-r
+            stressBar[i-1].x0 = CoG_x+r
+            stressBar[i-1].x1 = CoG_x-r
+            stressBar[i-1].fillcolor = 'rgb(255,0,0)'
+            stressBar[i-1].line.color = 'rgba(0,0,0,0)'
+        } else if (section_geom[i].y0 > h/2) {
+            stressBar[i-1] = structuredClone(section_geom[i])
+            let CoG_y = (stressBar[i-1].y0+stressBar[i-1].y1)/2
+            let CoG_x = (stressBar[i-1].x0+stressBar[i-1].x1)/2
+            let r = ((sigma_sp_out[k]*1000000 / f_yd) * (geo.dbar_p/2)**2)**0.5
+            stressBar[i-1].y0 = CoG_y+r
+            stressBar[i-1].y1 = CoG_y-r
+            stressBar[i-1].x0 = CoG_x+r
+            stressBar[i-1].x1 = CoG_x-r
+            stressBar[i-1].fillcolor = 'rgb(0,155,0)'
+            stressBar[i-1].line.color = 'rgba(0,0,0,0)'
+            
+        
+    }    
+    }    
 
     alpha =255;
     if (crackCheck[k]) {
         alpha = 0
     }
-// var traces = [
-//	{x: [0,0,w,w], y: [h-NA[k],h,h,h-NA[k]], fill: 'toself',
-//    fillcolor: 'rgba(0,0,255,255)',
-//line: {color:'rgba(0,0,0,0)'}},
-//    {x: [0,0,w,w], y: [0,h-NA[k],h-NA[k],0], fill: 'toself',
-//    fillcolor: 'rgba(255,0,0,' + alpha + ')',
-//line: {color:'rgba(0,0,0,0)'}}]
+
     
 if (!crackCheck[k]) {
 var cscale = [
@@ -428,7 +450,7 @@ var cscale = [
         yaxis2: { range: [0, h], showticklabels:false},
         xaxis3: { range: [-0.03, 0.0036], title: "strain" },
         yaxis3: { range: [0, h],showticklabels:false },
-        shapes: section_geom.concat(stress_dist_shape,stress_dist_shapeT),
+        shapes: section_geom.concat(stress_dist_shape,stress_dist_shapeT,stressBar),
         showlegend: false,
         annotations: [{
             text: (Math.round(eps_c_out[k] * 10000) / 10) + "‰",
@@ -452,8 +474,8 @@ var cscale = [
           },
     };
 
-    const ymax = Math.ceil(Math.max(...Mc.slice(2, Mc.length))) * 1.1;
-    const xmax = Math.max(...curvature.slice(2, curvature.length)) * 1.1;
+    const ymax = Math.max(...momentHistory) * 1.1;
+    const xmax = Math.max(...curvatureHistory) * 1.1;
 
     var layout3 = {
         margin: {
@@ -484,7 +506,7 @@ var cscale = [
           title: 'Steel stress / MPa',
           showgrid: false,
           rangemode: 'tozero',
-          range: [-350,350]
+          range: [(-f_yd/1e6)*1.1,(f_yd/1e6)*1.1]
         },
         yaxis2: {
           title: 'Concrete stress / MPa',
