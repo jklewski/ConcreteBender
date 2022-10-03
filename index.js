@@ -43,6 +43,9 @@ function drawfunc(geo) {
         var x_bar2 = math.range(0.01 + 1.5 * dbar, w - 1.5 * dbar, barXSpace / (layer2 - 1), true)._data
         var x_bar = x_bar1.concat(x_bar2);
     }
+    else if (nbars == 1) {
+        x_bar = [geo.b/2]
+    }
     else if (nbars > nmax && layer2 == 1) {
         var x_bar1 = math.range(0.01 + 1.5 * dbar, w - 1.5 * dbar, barXSpace / (layer1 - 1), true)._data
         var x_bar = x_bar1.concat([w / 2]);
@@ -63,9 +66,13 @@ function drawfunc(geo) {
 
     //x-y-location of top bars
     var barpXSpace = (w - (3 * dbar_p + (2 * 0.01)));
+    if (nbars_p<2) {
+        var x_bar_p = [geo.b/2]
+        y_bar_p = h - 0.01 - 1.5 * dbar_p;    
+    } else {
     var x_bar_p = math.range(0.01 + 1.5 * dbar_p, w - 1.5 * dbar_p - 0.01, barpXSpace / (nbars_p - 1), true)._data
     y_bar_p = h - 0.01 - 1.5 * dbar_p;
-
+    }
     //draw cross section
     section_geom = [
         {
@@ -93,7 +100,7 @@ function drawfunc(geo) {
 }
 
 function calcMtrl() {
-    num = 200;
+    num = 300;
     f_cm = document.getElementById("fc").value * 1e6
     eps_cu = 3.5e-3;
     eps_c1 = (0.7 * (f_cm * 10 ** -6) ** 0.31) * 10 ** -3;
@@ -138,7 +145,10 @@ function calc() {
     id_zeroCracked = [];
     id_zeroUncracked = [];
     Mc = [0];
-
+    Fs_out = [];
+    Fc_out = []
+    Fsp_out = [];
+    Fct_out = [];
     curvature = [0];
     yc_out = [];
     xc_out = [];
@@ -208,10 +218,17 @@ function calc() {
         curvature[i] = 1 / ((d - xn[id_zero[i]]) / eps_s1_out[i])
         NA[i] = xn[id_zero[i]]
         Fs = sigma_s_out[i] * A_s * 1e3
+        Fs_out[i] = Fs;
         Fsp = sigma_sp_out[i] * A_sp * 1e3
+        Fsp_out[i] = Fsp;
         Fc = sigma_sub_mean * b * xn[id_zero[i]] / 1e3
-        Fct = 0.5 * eps_cb[id_zero[i]] * E_cm * b / 1e3 
-        if (crackCheck) {
+        Fc_out[i] = Fc;
+        Fct = 0.5 * eps_cb[id_zero[i]] * E_cm * b * (h-xn[id_zero[i]]) / 1e3 
+        Fct_out[i] = Fct;
+        if (crackCheck[i]) {
+        Fct_out[i] = 0;
+        }
+        if (crackCheck[i]) {
             Mc[i] = Fc * (cncrt_tp[i]-(h-xn[id_zero[i]])) +
                     Fsp * (xn[id_zero[i]]-d_p) + 
                     Fs * [d-xn[id_zero[i]]] 
@@ -261,26 +278,31 @@ function plotFunc() {
     }
     
     stress_dist_shapeT = {
-        type: 'path', path: pathdefsT[k], line: { width: 1, color: 'rgb(0,0,0)' }, fillcolor: 'rgba(255,0,0,0.5)',
-        xref: 'x2', yref: 'y2'
+        type: 'path', path: pathdefsT[k], line: { width: (!crackCheck[k] ? 1:0), color: 'rgb(0,0,0)' }, fillcolor: 'rgba(255,0,0,0.5)',
+        xref: 'x2', yref: 'y2',
     }
     
     var trace11 = {
         x: [0, -sigma_s_out[k] / (10)],
         y: [h - d, h - d],
         xaxis: 'x2', yaxis: 'y2', mode: 'lines+markers',
-        line: {color:'rgb(255,0,0)'}
+        line: {color:'magenta'}
     }
+
+    
     var trace12 = {
         x: [0, sigma_sp_out[k] / (10)],
         y: [h - d_p, h - d_p],
-        xaxis: 'x2', yaxis: 'y2', mode: 'lines+markers',
-        line: {color:'rgb(0,155,0)'}
+        xaxis: 'x2', 
+        yaxis: 'y2',
+        line: {color:'rgb(0,155,0)'},
+        mode:geo.nbars_p<1 ? 'none':'scatter',
     }
     var trace13 = {
         x: [eps_c[k], -eps_s1_out[k]],
         y: [h, d_p],
-        xaxis: 'x3', yaxis: 'y3', mode: 'lines+markers'
+        xaxis: 'x3', yaxis: 'y3', mode: 'lines+markers',
+        line:{color:'black'}
     }
     var trace14 = {
         x: 0,
@@ -327,7 +349,7 @@ function plotFunc() {
         y: [-sigma_s_out[k], -sigma_s_out[k]],
         mode: "scatter",
         yaxis: "y",
-        marker: {color:'rgb(255,0,0)',size:10,symbol:symb_s1},
+        marker: {color:'magenta',size:10,symbol:symb_s1},
         name: "Steel, (bottom)",
     }
 
@@ -373,7 +395,7 @@ function plotFunc() {
             stressBar[i-1].y1 = CoG_y-r
             stressBar[i-1].x0 = CoG_x+r
             stressBar[i-1].x1 = CoG_x-r
-            stressBar[i-1].fillcolor = 'rgb(255,0,0)'
+            stressBar[i-1].fillcolor = 'magenta'
             stressBar[i-1].line.color = 'rgba(0,0,0,0)'
         } else if (section_geom[i].y0 > h/2) {
             stressBar[i-1] = structuredClone(section_geom[i])
@@ -446,10 +468,11 @@ var cscale = [
         coloraxis: {cmid:0,colorscale:cscale,colorbar: {x: -0.2,orientation:'h'}},
         xaxis: { range: [0, w] },
         yaxis: { range: [0, h], scaleanchor: "x" },
-        xaxis2: { range: [-50, 50], title: "stress (scaled)"},
+        xaxis2: { range: [-50, 50], title: "stress (scaled)",domain:[0.30,0.83]},
         yaxis2: { range: [0, h], showticklabels:false},
-        xaxis3: { range: [-0.03, 0.0036], title: "strain" },
-        yaxis3: { range: [0, h],showticklabels:false },
+        xaxis3: { range: [-0.03, 0.0036], title: "strain",domain:[0.85,1] },
+        yaxis3: { range: [0, h],showticklabels:false,
+        },
         shapes: section_geom.concat(stress_dist_shape,stress_dist_shapeT,stressBar),
         showlegend: false,
         annotations: [{
@@ -464,7 +487,22 @@ var cscale = [
             y: h,
             xref: 'x3',
             yref: 'y3',
-        }],
+        },  {
+            xref: 'x2',
+            yref: 'y2',
+            y: geo.h,
+            xanchor: 'left',
+            x: -f_yd/1e7,
+            yanchor: 'top',
+            text: "(&#10132;) <span style='color:red'>" + Math.round(Fct_out[k]) + 'kN</span>' + " +<span style='color:magenta'> " + Math.round(Fs_out[k]) + 'kN' + "</span> ≈ " + "<span style='color:blue'>" + Math.round(Fc_out[k]) + "kN</span> + " + 
+            "<span style='color:green'>" + Math.round(Fsp_out[k]) + "kN</span>",
+            showarrow: false,
+            bordercolor: '#c7c7c7',
+            borderwidth: 2,
+            borderpad: 4,
+            bgcolor: 'rgba(255,255,255,1)',
+            opacity: 0.8
+          }],
         margin: {
             l: 50,
             r: 10,
