@@ -286,7 +286,7 @@ function plotFunc() {
         x: [0, -sigma_s_out[k] / (10)],
         y: [h - d, h - d],
         xaxis: 'x2', yaxis: 'y2', mode: 'lines+markers',
-        line: {color:'magenta'}
+        line: {color:'red'}
     }
 
     
@@ -349,7 +349,7 @@ function plotFunc() {
         y: [-sigma_s_out[k], -sigma_s_out[k]],
         mode: "scatter",
         yaxis: "y",
-        marker: {color:'magenta',size:10,symbol:symb_s1},
+        marker: {color:'red',size:10,symbol:symb_s1},
         name: "Steel, (bottom)",
     }
 
@@ -395,7 +395,7 @@ function plotFunc() {
             stressBar[i-1].y1 = CoG_y-r
             stressBar[i-1].x0 = CoG_x+r
             stressBar[i-1].x1 = CoG_x-r
-            stressBar[i-1].fillcolor = 'magenta'
+            stressBar[i-1].fillcolor = 'red'
             stressBar[i-1].line.color = 'rgba(0,0,0,0)'
         } else if (section_geom[i].y0 > h/2) {
             stressBar[i-1] = structuredClone(section_geom[i])
@@ -421,7 +421,7 @@ function plotFunc() {
     
 if (!crackCheck[k]) {
 var cscale = [
-    [0, 'rgb(255,0,0)'],
+    [0, 'rgb(100,55,0)'],
     [0.5, 'rgb(255,255,255)'],
     [1, 'rgb(0,0,255)'],
     ]
@@ -466,12 +466,12 @@ var cscale = [
             subplots:['xy2','x2y2','x3y2'],
         },
         coloraxis: {cmid:0,colorscale:cscale,colorbar: {x: -0.2,orientation:'h'}},
-        xaxis: { range: [0, w] },
-        yaxis: { range: [0, h], scaleanchor: "x" },
-        xaxis2: { range: [-50, 50], title: "stress (scaled)",domain:[0.30,0.83]},
-        yaxis2: { range: [0, h], showticklabels:false},
-        xaxis3: { range: [-0.03, 0.0036], title: "strain",domain:[0.85,1] },
-        yaxis3: { range: [0, h],showticklabels:false,
+        xaxis: { range: [0, w],fixedrange: true},
+        yaxis: { range: [0, h], scaleanchor: "x",fixedrange: true},
+        xaxis2: { range: [-50, 50], title: "stress (scaled)",domain:[0.30,0.83],fixedrange: true},
+        yaxis2: { range: [0, h], showticklabels:false,fixedrange: true},
+        xaxis3: { range: [-0.03, 0.0036], title: "strain",domain:[0.85,1],fixedrange: true},
+        yaxis3: { range: [0, h],showticklabels:false,fixedrange: true
         },
         shapes: section_geom.concat(stress_dist_shape,stress_dist_shapeT,stressBar),
         showlegend: false,
@@ -494,7 +494,7 @@ var cscale = [
             xanchor: 'left',
             x: -f_yd/1e7,
             yanchor: 'top',
-            text: "(&#10132;) <span style='color:red'>" + Math.round(Fct_out[k]) + 'kN</span>' + " +<span style='color:magenta'> " + Math.round(Fs_out[k]) + 'kN' + "</span> ≈ " + "<span style='color:blue'>" + Math.round(Fc_out[k]) + "kN</span> + " + 
+            text: "(&#10132;) <span style='color:rgb(100,55,0)'>" + Math.round(Fct_out[k]) + 'kN</span>' + " +<span style='color:red'> " + Math.round(Fs_out[k]) + 'kN' + "</span> ≈ " + "<span style='color:blue'>" + Math.round(Fc_out[k]) + "kN</span> + " + 
             "<span style='color:green'>" + Math.round(Fsp_out[k]) + "kN</span>",
             showarrow: false,
             bordercolor: '#c7c7c7',
@@ -525,10 +525,11 @@ var cscale = [
           },
         yaxis: {
             title:"Moment / kNm",
-            range: [0, ymax] },
+            range: [0, ymax],
+            fixedrange: true},
         xaxis: {
             title:"curvature / r<sup> -1</sup>",
-            range: [0, xmax] },
+            range: [0, xmax],fixedrange: true},
         showlegend: false,
         paper_bgcolor:'rgba(0,0,0,0)',        
     }
@@ -538,13 +539,14 @@ var cscale = [
         xaxis: {domain: [0.15, 0.85],
             range:[-0.005,0.005],
             title:"strain / -",
-            
+            fixedrange: true,
         },
         yaxis: {
           title: 'Steel stress / MPa',
           showgrid: false,
           rangemode: 'tozero',
-          range: [(-f_yd/1e6)*1.1,(f_yd/1e6)*1.1]
+          range: [(-f_yd/1e6)*1.1,(f_yd/1e6)*1.1],
+          fixedrange: true,
         },
         yaxis2: {
           title: 'Concrete stress / MPa',
@@ -555,7 +557,7 @@ var cscale = [
           position: 0.85,
           range:[-f_cm*2e-6,f_cm*2e-6],
           showgrid: false,
-
+          fixedrange: true,
           rangemode: 'tozero',
         },
         legend: {
